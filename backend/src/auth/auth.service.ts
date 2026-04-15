@@ -18,7 +18,7 @@ export class AuthService {
     if (error || !data.session || !data.user) {
       throw new HttpException(
         {
-          message: 'Invalid email or password',
+          message: error?.message || 'Invalid email or password',
           code: 'AUTH_INVALID',
         },
         401,
@@ -53,56 +53,125 @@ export class AuthService {
     };
   }
 
-async register(body: SignupDto) {
-  // 🔹 check if already exists in YOUR DB
-  const existingUser = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, body.email));
+  async register(body: SignupDto) {
+    // 🔹 check if already exists in YOUR DB
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, body.email));
 
-  if (existingUser.length) {
-    throw new HttpException(
-      {
-        message: 'User already exists',
-        code: 'USER_ALREADY_EXISTS',
+    if (existingUser.length) {
+      throw new HttpException(
+        {
+          message: 'User already exists',
+          code: 'USER_ALREADY_EXISTS',
+        },
+        400,
+      );
+    }
+
+    // 🔹 create in Supabase
+    const { data, error } = await supabase.auth.signUp({
+      email: body.email,
+      password: body.password,
+    });
+
+    if (error || !data.user) {
+      throw new HttpException(
+        {
+          message: error?.message || 'Signup failed',
+          code: 'AUTH_SIGNUP_FAILED',
+        },
+        400,
+      );
+    }
+
+    const user = data.user;
+
+    // 🔹 insert into your DB
+    await db.insert(users).values({
+      id: user.id,
+      email: user.email!,
+      firstName: body.firstName ?? null,
+      lastName: body.lastName ?? null,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
       },
-      400,
-    );
+      accessToken: data.session?.access_token ?? null,
+      refreshToken: data.session?.refresh_token ?? null,
+    };
   }
 
-  // 🔹 create in Supabase
-  const { data, error } = await supabase.auth.signUp({
-    email: body.email,
-    password: body.password,
-  });
+  // auth.service.ts
 
-  if (error || !data.user) {
-    throw new HttpException(
-      {
-        message: error?.message || 'Signup failed',
-        code: 'AUTH_SIGNUP_FAILED',
-      },
-      400,
-    );
-  }
+  async me(token: string) {
+    const { data, error } = await supabase.auth.getUser(token);
 
-  const user = data.user;
+    if (error || !data.user) {
+      throw new HttpException(
+        {
+          message: 'Invalid session',
+          code: 'INVALID_SESSION',
+        },
+        401,
+      );
+    }
 
-  // 🔹 insert into your DB
-  await db.insert(users).values({
-    id: user.id,
-    email: user.email!,
-    firstName: body.firstName ?? null,
-    lastName: body.lastName ?? null,
-  });
+    const authUser = data.user;
 
-  return {
-    user: {
+    // 🔹 Fetch full user from your DB
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, authUser.id));
+
+    if (!existingUser.length) {
+      throw new HttpException(
+        {
+          message: 'User not found',
+          code: 'USER_NOT_FOUND',
+        },
+        404,
+      );
+    }
+
+    const user = existingUser[0];
+
+    return {
       id: user.id,
       email: user.email,
-    },
-    accessToken: data.session?.access_token ?? null,
-    refreshToken: data.session?.refresh_token ?? null,
-  };
-}
+      firstName: user.firstName,
+      lastName: user.lastName,
+      createdAt: user.createdAt,
+    };
+  }
+
+  async refresh(refreshToken: string) {
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error || !data.session || !data.user) {
+      throw new HttpException(
+        {
+          message: 'Invalid refresh token',
+          code: 'INVALID_REFRESH_TOKEN',
+        },
+        401,
+      );
+    }
+
+    return {
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+      },
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    };
+  }
 }
