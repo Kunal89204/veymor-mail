@@ -1,5 +1,4 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { SuccessResponse } from 'src/common/dto/response.dto';
 import { db } from '../db/db';
 import { users } from '../db/schema';
 import { LoginDto } from './dto';
@@ -105,8 +104,6 @@ export class AuthService {
       refreshToken: data.session?.refresh_token ?? null,
     };
   }
-
-  // auth.service.ts
 
   async me(token: string) {
     const { data, error } = await supabase.auth.getUser(token);

@@ -15,6 +15,13 @@
       "when": 1776081057918,
       "tag": "0001_chunky_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776344172240,
+      "tag": "0002_cynical_boomer",
+      "breakpoints": true
     }
   ]
 }
