@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api/v1', {
-    exclude: ['health-check'],
+    exclude: ['health-check', '/'],
   });
   app.enableCors({
     origin: '*',
@@ -23,7 +23,6 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
- 
   await app.listen(process.env.PORT ?? 8000);
 }
 bootstrap();
