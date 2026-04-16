@@ -10,7 +10,7 @@ async function bootstrap() {
     exclude: ['health-check', '/'],
   });
   app.enableCors({
-    origin: '*',
+    origin: 'http://localhost:3000',
     credentials: true,
   });
   app.useGlobalPipes(

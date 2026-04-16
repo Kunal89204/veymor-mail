@@ -72,6 +72,9 @@ export class AuthController {
   @Get('me')
   async me(@Req() req: Request) {
     const token = req.cookies?.access_token;
+    console.log(token);
+
+    console.log('i am token from auth me', token);
 
     if (!token) {
       throw new HttpException(
@@ -102,18 +105,29 @@ export class AuthController {
     const result = this.authService.refresh(refreshToken);
 
     // 🔐 overwrite old cookies with new tokens
-  res.cookie('access_token', (await result).accessToken, {
-    httpOnly: true,
-    secure: false, // true in production
-    sameSite: 'lax',
-  });
+    res.cookie('access_token', (await result).accessToken, {
+      httpOnly: true,
+      secure: false, // true in production
+      sameSite: 'lax',
+    });
 
-  res.cookie('refresh_token', (await result).refreshToken, {
-    httpOnly: true,
-    secure: false, // true in production
-    sameSite: 'lax',
-  });
+    res.cookie('refresh_token', (await result).refreshToken, {
+      httpOnly: true,
+      secure: false, // true in production
+      sameSite: 'lax',
+    });
 
-  return new SuccessResponse('Session refreshed successfully', (await result).user);
+    return new SuccessResponse(
+      'Session refreshed successfully',
+      (await result).user,
+    );
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+
+    return new SuccessResponse('Logged out successfully', null);
   }
 }

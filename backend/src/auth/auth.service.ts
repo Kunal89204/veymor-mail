@@ -18,7 +18,7 @@ export class AuthService {
     if (error || !data.session || !data.user) {
       throw new HttpException(
         {
-          message: error?.message || 'Invalid email or password',
+          message: 'Invalid email or password',
           code: 'AUTH_INVALID',
         },
         401,
