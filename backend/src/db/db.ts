@@ -1,8 +1,15 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('Missing DATABASE_URL in environment variables.');
+}
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres.racgtmmxdfypubkbobxj:VeymorMail892004%24%24@aws-1-ap-south-1.pooler.supabase.com:6543/postgres',
+  connectionString: databaseUrl,
 });
 
 export const db = drizzle(pool);
