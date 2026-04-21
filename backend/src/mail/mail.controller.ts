@@ -1,14 +1,30 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { ConnectImapDto } from './dto/connect-imap.dto';
 
 @Controller('mail')
+@UseGuards(AuthGuard)
 export class MailController {
-  constructor(private mailService: MailService) {}
+  constructor(private readonly mailService: MailService) {}
 
-  @UseGuards(AuthGuard)
-  @Get('connect')
-  getHello() {
-    return this.mailService.getHello();
+  @Post('connect')
+  connect(@Body() body: ConnectImapDto) {
+    return this.mailService.connectImap(body);
+  }
+
+  @Post('folders')
+  folders(@Body() body: ConnectImapDto) {
+    return this.mailService.getFolders(body);
+  }
+
+  @Post('emails')
+  emails(@Body() body: any) {
+    return this.mailService.getEmails(body);
+  }
+
+  @Post('email')
+  email(@Body() body: any) {
+    return this.mailService.getEmailDetail(body);
   }
 }

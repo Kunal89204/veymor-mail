@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 
 import { supabase } from '../../lib/supabase';
-import { Observable } from 'rxjs';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -22,7 +21,7 @@ export class AuthGuard implements CanActivate {
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data.user) {
-      throw new UnauthorizedException('Invalid Token');
+      throw new UnauthorizedException('Invalid Tokenss');
     }
 
     req.user = data.user;
